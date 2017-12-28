@@ -19,6 +19,7 @@ import copy
 import functools
 import shutil
 import re
+import ctypes
 
 """
     QT 模块类型：
@@ -437,7 +438,6 @@ def updateGeometry  (top ) :
                                  y = y,
                                  w = w, 
                                  h = h)
-
     top.geometry(g)
 def copyTree        (src , dst) :
     for root, dirs, files in os.walk(src):
@@ -450,6 +450,10 @@ def copyTree        (src , dst) :
             srcpath = os.path.join(srcpath, file)
             dstpath = os.path.join(dstpath, file)
             shutil.copyfile(srcpath, dstpath)
+def preventHibernate(top ) :
+    if platform.system() == "Windows" :
+        ctypes.windll.kernel32.SetThreadExecutionState(0x80000001)
+    top.after(10 * 1000, lambda: preventHibernate(top))
 
 class CfgArgsDlg(tk.Frame) :
     def __init__(self, args = "", master = None) :
@@ -508,8 +512,10 @@ class CfgArgsDlg(tk.Frame) :
         self.toplevel.grab_release()
         self.toplevel.destroy()
     def doModal (self) :
-        centerWindow(self.toplevel)
+        self.toplevel.withdraw ()
         updateGeometry(self.toplevel)
+        centerWindow  (self.toplevel)
+        self.toplevel.deiconify()
         self.toplevel.wait_window()
 
 class ModuleView(tk.Frame) :
@@ -800,32 +806,41 @@ class QTBuilder :
 QT_CONFIGS = {
     'winnt-mingw': {
         'confarg': '-opensource -confirm-license -nomake examples '
-                   '-opengl desktop -plugin-sql-odbc -silent ',
+                   '-opengl desktop '
+                   '-plugin-sql-odbc -silent ',
         'makecmd': 'mingw32-make',
         'makearg': '-j4',
+        'makedoc': 1,
+        'skiperr': 0,
         'message': ''
     },
     'winnt-msvc' : {
         'confarg': '-opensource -confirm-license -nomake examples '
-                   '-opengl desktop -plugin-sql-odbc -silent '
-                   '-mp ',
+                   '-opengl desktop '
+                   '-plugin-sql-odbc -silent -mp ',
         'makecmd': 'nmake',
+        'makedoc': 1,
+        'skiperr': 0,
         'makearg': '',
         'message': ''
     },
     'winxp-mingw': {
         'confarg': '-opensource -confirm-license -nomake examples '
-                   '-opengl desktop -plugin-sql-odbc '
-                   '-no-angle ',
+                   '-opengl desktop '
+                   '-plugin-sql-odbc -no-angle ',
         'makecmd': 'mingw32-make',
+        'makedoc': 1,
+        'skiperr': 1,
         'makearg': '-j4',
         'message': 'Windows XP上只能使用QT 5.7.1或者以下的版本'
     },
     'linux-g++'  : {
         'confarg': '-opensource -confirm-license -nomake examples '
-                   '-opengl desktop -silent '
-                   '-qt-xcb -fontconfig ',
+                   '-opengl desktop -static'
+                   '-silent -qt-xcb -fontconfig ',
         'makecmd': 'make',
+        'makedoc': 1,
+        'skiperr': 0,
         'makearg': '-j4',
         'message': '在Linux上使用缺省配置编译QT，请确认以下支持库已被安装：\n'
                    '    * mesa-common-dev    \n'
@@ -1250,6 +1265,8 @@ class MainWindow(tk.Frame) :
         self.configArgs.set(cfg['confarg'])
         self.makeCmd   .set(cfg['makecmd'])
         self.makeArgs  .set(cfg['makearg'])
+        self.makeDoc   .set(cfg['makedoc'])
+        self.skipError .set(cfg['skiperr'])
         
     def setStatusText     (self, text) :
         self.statusText.set(text)
@@ -1319,4 +1336,7 @@ root.wm_minsize(640, 0)
 root.resizable(False, False)
 centerWindow(root)
 root.deiconify()
+
+
+preventHibernate(root)
 root.mainloop()
