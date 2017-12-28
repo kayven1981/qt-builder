@@ -11,9 +11,8 @@
 
 ---
 ### 编译器与编译选项
-  - 尽量使用MingW编译器进行编译, 目前测试可用的版本有
-    > **MinGW-5.3.0** 的32和64位版本
-    > **MinGW-7.2.0** 的32和64位版本
+  - 尽量使用MingW编译器进行编译, MinGW5.3.0以上的版本应该都没问题，我测试过的版面是MinGW-5.3.0和MinGW-7.2.0
+    >在使用MinGW编译QT 5.7.1时，可能会遇到在生成qttools的模块文档（mingw32-make docs)时出错的情况，但在执行一次mingw32-make docs，或者执行mingw32-make install_docs，就不报错了。原因懒得查了，加了缺省参数里加了强制编译选项，反正之后安装文档时会修正这个错误```
 
   - 如果一定要用Visual C++，那最好用MSVC2010
     > QT 5.7.1 的configure脚本已经不再支持 **-target xp** 参数，MSVC2012以上
